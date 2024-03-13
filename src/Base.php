@@ -261,6 +261,22 @@ class Base
         $this->type = $type;
     }
     
+    /**Guiii - Adicionada método abaixo
+     * Set all addresses as AddBCC
+     * @param array $addresses
+     * @param bool $include
+     */
+    public function setAddressesBCC(array $addresses = [])
+    {
+        $novaLista = array_unique($addresses);
+        $novaLista = array_map(array($this, 'clearAddressString'), $novaLista);
+        $novaLista = array_filter($novaLista, array($this, 'checkEmailAddress'));
+        foreach($novaLista as $add)
+        {
+           $this->mail->AddBCC($add);
+        }
+    }
+    
     /**
      * Set all addresses including those that exists in the xml document
      * Send email only to listed addresses ignoring all email addresses in xml
