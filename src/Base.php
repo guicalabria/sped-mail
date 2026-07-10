@@ -222,13 +222,46 @@ class Base
      */
     protected function getXmlData($xml)
     {
-        $dom = new \DOMDocument('1.0', 'UTF-8');
-        $dom->preserveWhiteSpace = false;
-        $dom->loadXML($xml);
-        $root = $dom->documentElement;
-        $name = $root->tagName;
-        $dest = $dom->getElementsByTagName('dest')->item(0);
-        $ide = $dom->getElementsByTagName('ide')->item(0);
+         // 1) Basic input validation
+         if (empty($xml) || !is_string($xml))
+         {
+            throw new \InvalidArgumentException(
+               "O XML informado está vazio ou não é uma string válida."
+            );
+         }
+
+         // 2) Capture libxml errors internally, avoiding PHP Warnings
+         $previousErrorSetting = libxml_use_internal_errors(true);
+         libxml_clear_errors();
+
+         $dom = new \DOMDocument('1.0', 'UTF-8');
+         $dom->preserveWhiteSpace = false;
+
+         $loaded = $dom->loadXML($xml);
+
+         // 3) Check whether the parse failed
+         if ($loaded === false || $dom->documentElement === null)
+         {
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrorSetting);
+
+            $errorMsg = "Falha ao interpretar o XML informado.";
+            if (!empty($errors))
+            {
+               $errorMsg .= " Detalhe: " . trim($errors[0]->message);
+            }
+
+            throw new \InvalidArgumentException($errorMsg);
+         }
+
+         // Restore the previous libxml error-handling state
+         libxml_use_internal_errors($previousErrorSetting);
+
+         $root = $dom->documentElement;
+         $name = $root->tagName;
+         $dest = $dom->getElementsByTagName('dest')->item(0);
+         $ide = $dom->getElementsByTagName('ide')->item(0);
         switch ($name) {
         case 'nfeProc':
         case 'NFe':
